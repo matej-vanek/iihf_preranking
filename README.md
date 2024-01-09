@@ -7,7 +7,13 @@ Data contain data of
 
 Origin of data is mainly English Wikipedia with Czech and German Wikipedia filling incomplete information.
 
-1992 Winter Olympic Games contain Denmark which lost a qualification round.
-1993 World Championship contains six teams which lost a qualification phase, grouped into two groups based on their qualification round placement.
-1994 Winter Olympic Games contain four teams which lost a qualification phase, ordered by their placement in a qualification table.
-1994 World Championship contains two teams which lost a qualification phase.
+Teams placement notes:
+- 1992 Winter Olympic Games contain Denmark which lost a qualification round.
+- 1993 World Championship contains six teams which lost a qualification phase, grouped into two groups based on their qualification round placement.
+- 1994 Winter Olympic Games contain four teams which lost a qualification phase, ordered by their placement in a qualification table.
+- 1994 World Championship contains two teams which lost a qualification phase.
+- 1996 World Championship contains three teams which lost a qualification phase, grouped into two groups based on their qualification round placement.
+- 1997 World Championship contains three teams which competed in an unofficial "E group" tournament
+- 1998 and 2002 Winter Olympic Games contain teams which lost a qualification, ordered by their placement in a qualification table (final qualification) and their relative placement in pre-qualification groups
+- 2001 - 2006 World Championships Divisions I, II (and III) teams are ordered by their relative placement in group tables
+- 2006 Winter Olympic Games contain teams which lost a qualification phase, ordered by their relative placement in qualification groups tables
