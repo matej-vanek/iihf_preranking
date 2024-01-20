@@ -1,0 +1,4 @@
+odfpy>=1.4.1
+pandas>=2.2.0
+pylint>=3.0.3
+pytest>=7.4.4
