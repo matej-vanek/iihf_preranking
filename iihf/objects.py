@@ -23,7 +23,7 @@ class Participant:
 
     all_participants = {}
 
-    def __init__(self, code: str, name_en: str, name_cs: str, parent: str):
+    def __init__(self, code: str, name_en: str, name_cs: str, parent: Optional[str]):
         self._code = code
         self._name_en = name_en
         self._name_cs = name_cs
@@ -123,7 +123,7 @@ def process_placement_dicts(placement_dicts: list[dict[Participant, Placement]])
         ranks = [placement.rank for placement in placement_dict.values()]
         max_rank = max(ranks)
         max_rank_cardinality = ranks.count(max_rank)
-        max_rank += max_rank_cardinality
+        max_rank += max_rank_cardinality - 1
 
         for participant, placement in placement_dict.items():
             placement.rank += previous_max_rank

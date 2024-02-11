@@ -1,7 +1,8 @@
 from typing import TypeAlias
 
 import pandas as pd
-from objects import Championship, Event, EventType, OlympicGames, Participant, Placement, process_placement_dicts
+
+from iihf.objects import Championship, Event, EventType, OlympicGames, Participant, Placement, process_placement_dicts
 
 EventsType: TypeAlias = dict[Event, dict[Participant, Placement]]
 
@@ -16,7 +17,7 @@ EVENT_TYPE_MAPPING = {
 
 
 def load_data(path: str) -> pd.DataFrame:
-    """Load data od participants, events and placements"""
+    """Load data of participants, events and placements"""
     raw_data = pd.read_excel(path, sheet_name=None, engine="odf")
     events = {}
     for sheet_name, sheet_data in raw_data.items():
@@ -31,7 +32,7 @@ def load_data(path: str) -> pd.DataFrame:
 def load_participants_sheet(sheet_data: pd.DataFrame) -> None:
     """Load participants from their sheet"""
     for _, row in sheet_data.iterrows():
-        Participant(row["code"], row["name_en"], row["name_cs"], row["parent"])
+        Participant(row["code"], row["name_en"], row["name_cs"], row["parent"] or None)
 
 
 def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) -> EventsType:
@@ -53,7 +54,7 @@ def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) ->
 
 
 def process_events(events: EventsType) -> pd.DataFrame:
-
+    """Group events into superevents and produce final dataframe"""
     superevent_data = {}
     for year in {event.year for event in events}:
         for superevent_type in (OlympicGames, Championship):
