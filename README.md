@@ -5,7 +5,7 @@ Data contain data of
 - World Championships - 1930-2023 except olympic years (1932, 1936, 1948, 1952, 1956, 1960, 1964, 1968, 1980, 1984 and 1988) and war pause 1940-1946
 - Olympic Games - 1920 Summer, 1924-2022 Winter
 - Thayer Tutt Trophy - 1980, 1984, 1988
-- Development Cup - 2017, 2018, 2022, 2023
+- Development Cup - 2017, 2018, 2022, 2023, 2024
 
 Origin of data is mainly English Wikipedia with Czech and German Wikipedia filling incomplete information.
 
