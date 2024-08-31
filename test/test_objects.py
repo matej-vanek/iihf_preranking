@@ -6,17 +6,17 @@ from iihf.objects import Participant, Placement, get_formula, process_placement_
 def test_process_placement_dicts():
     placement_dicts = [
         {
-            Participant("AAA", "aaa", "aaa", None): Placement(1, 100),
-            Participant("BBB", "bbb", "bbb", None): Placement(2, 40),
-            Participant("CCC", "ccc", "ccc", None): Placement(2, 40),
+            Participant("AAA", "aaa", "aaa", None): Placement("AAA", 1, 100),
+            Participant("BBB", "bbb", "bbb", None): Placement("BBB", 2, 40),
+            Participant("CCC", "ccc", "ccc", None): Placement("CCC", 2, 40),
         },
-        {Participant("DDD", "ddd", "ddd", None): Placement(1, 20)},
+        {Participant("DDD", "ddd", "ddd", None): Placement("DDD", 1, 20)},
     ]
     result = {
-        Participant("AAA", "aaa", "aaa", None): Placement(1, 120),
-        Participant("BBB", "bbb", "bbb", None): Placement(2, 80),
-        Participant("CCC", "ccc", "ccc", None): Placement(2, 80),
-        Participant("DDD", "ddd", "ddd", None): Placement(4, 20),
+        Participant("AAA", "aaa", "aaa", None): Placement("AAA", 1, 120),
+        Participant("BBB", "bbb", "bbb", None): Placement("BBB", 2, 80),
+        Participant("CCC", "ccc", "ccc", None): Placement("CCC", 2, 80),
+        Participant("DDD", "ddd", "ddd", None): Placement("DDD", 4, 20),
     }
     assert process_placement_dicts(placement_dicts) == result
 

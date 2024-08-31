@@ -1,9 +1,10 @@
 """Objects used in data"""
 
+import math
 from dataclasses import dataclass
 from enum import Enum
 from functools import total_ordering
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 
 class EventType(Enum):
@@ -67,8 +68,16 @@ class Participant:
 class Placement:
     """Placement of a participant within a (super)event"""
 
-    rank: int  # starting from 1
-    points: Optional[int] = None
+    original_participant_code: Optional[str]
+    superevent_rank: int | float  # starting from 1
+    superevent_points: int = 0
+    four_year_rank: int | float = math.inf
+    four_year_points: int = 0
+
+    @property
+    def get_four_year_rank_key(self):
+        """Get key for a ranking of the current superevent"""
+        return -self.four_year_points, -self.superevent_points
 
 
 @dataclass(frozen=True)
@@ -85,9 +94,19 @@ class SuperEvent:
 
     year: int
     event_types: list[EventType]
+    order_in_year = 0
 
     def __repr__(self):
         return f"{self.__class__.__name__}(year={self.year})"
+
+    def whole_years_behind(self, other: Any) -> int:
+        """Count whole years which a superevent is behind another superevent"""
+        if not isinstance(other, SuperEvent):
+            raise ValueError(f"cannot compute distance to {type(other)}")
+        years = other.year - self.year
+        if self.order_in_year > other.order_in_year:
+            years -= 1
+        return years
 
 
 class OlympicGames(SuperEvent):
@@ -96,6 +115,7 @@ class OlympicGames(SuperEvent):
         EventType.SUMMER_OLYMPIC_GAMES,
         EventType.THAYER_TRUTT_TROPHY,
     )
+    order_in_year = 0
 
     def __init__(self, year):
         super().__init__(year, self.event_types)
@@ -107,6 +127,7 @@ class Championship(SuperEvent):
         EventType.EUROPEAN_CHAMPIONSHIP,
         EventType.DEVELOPMENT_CUP,
     )
+    order_in_year = 1
 
     def __init__(self, year):
         super().__init__(year, self.event_types)
@@ -114,32 +135,23 @@ class Championship(SuperEvent):
 
 def process_placement_dicts(placement_dicts: list[dict[Participant, Placement]]) -> dict[Participant, Placement]:
     """Join placement sets into a single set, assign points to placements based on their rank"""
-    previous_max_rank = 0
+    total_participants = 0
     final_placements = {}
     for placement_dict in placement_dicts:
-        # get last participant's rank in case ranks could not be shared
-        # count of participants cannot be used due to non-systematic ranks
-        # of suspended Russia and Belarus
-        ranks = [placement.rank for placement in placement_dict.values()]
-        max_rank = max(ranks)
-        max_rank_cardinality = ranks.count(max_rank)
-        max_rank += max_rank_cardinality - 1
-
         for participant, placement in placement_dict.items():
-            placement.rank += previous_max_rank
             final_placements[participant] = placement
+        total_participants += len(placement_dict)
 
-        previous_max_rank += max_rank
-
-    formula = get_formula(previous_max_rank)
+    formula = get_formula(total_participants)
     for placement in final_placements.values():
-        placement.points = formula(placement.rank)
+        if not placement.superevent_points:
+            placement.superevent_points = formula(placement.superevent_rank)
     return final_placements
 
 
 def get_formula(max_rank: int) -> Callable[[int], int]:
     """Create a formula translating rank into points"""
-    point_breaks = [1, 2, 8]
+    point_breaks = [1, 2, 4, 8]
     points_list = []
 
     points = 20 * max_rank + sum(max_rank >= pb + 1 for pb in point_breaks) * 20
