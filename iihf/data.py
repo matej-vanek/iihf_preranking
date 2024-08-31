@@ -1,3 +1,4 @@
+import math
 from typing import TypeAlias
 
 import pandas as pd
@@ -15,6 +16,9 @@ EVENT_TYPE_MAPPING = {
     "WOG": EventType.WINTER_OLYMPIC_GAMES,
 }
 
+LIMITS = {OlympicGames: 1, Championship: 4}
+LIMIT_YEARS = 4
+
 
 def load_data(path: str) -> pd.DataFrame:
     """Load data of participants, events and placements"""
@@ -26,7 +30,9 @@ def load_data(path: str) -> pd.DataFrame:
         else:
             events = load_event(events, sheet_name, sheet_data)
 
-    return process_events(events)
+    processed_events = process_events(events)
+    processed_data = process_four_years(processed_events)
+    return processed_data
 
 
 def load_participants_sheet(sheet_data: pd.DataFrame) -> None:
@@ -48,7 +54,11 @@ def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) ->
             raise ValueError(f"duplicate placement for {participant} in {event}")
         if not pd.isnull(participant.parent):
             participant = Participant.get_participant(participant.parent)
-        placement_dict[participant] = Placement(row["rank"])
+        placement_dict[participant] = Placement(
+            original_participant_code=row["participant"],
+            superevent_rank=row["rank"],
+            superevent_points=row.get("points"),
+        )
     events[event] = placement_dict
     return events
 
@@ -56,7 +66,7 @@ def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) ->
 def process_events(events: EventsType) -> pd.DataFrame:
     """Group events into superevents and produce final dataframe"""
     superevent_data = {}
-    for year in {event.year for event in events}:
+    for year in sorted({event.year for event in events}):
         for superevent_type in (OlympicGames, Championship):
             matching_events = [
                 (event, participant_placements)
@@ -73,8 +83,43 @@ def process_events(events: EventsType) -> pd.DataFrame:
 
             superevent_data[superevent] = pd.Series(final_placement_dict.values(), index=final_placement_dict.keys())
 
-    return pd.concat(superevent_data, axis=1)
+    superevent_data = pd.concat(superevent_data, axis=1)
+
+    return superevent_data
 
 
-data = load_data("iihf/data.ods")
-print(data.to_string())
+def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
+    """Fill points and rank for the ranking period"""
+    for superevent_idx, (superevent, superevent_data) in enumerate(list(data.items())):
+        processed_superevents = {OlympicGames: 0, Championship: 0}
+
+        for backward in range(min(superevent_idx + 1, 5)):
+            older_superevent, _older_superevent_data = list(list(data.items()))[superevent_idx - backward]
+            if processed_superevents[type(older_superevent)] >= LIMITS[type(older_superevent)]:
+                continue
+            if superevent.year - older_superevent.year > LIMIT_YEARS:
+                break
+
+            processed_superevents[type(older_superevent)] += 1
+            coef = max(0, 1 - 0.25 * older_superevent.whole_years_behind(superevent))
+
+            for participant, older_placement in data[older_superevent].items():
+                if pd.isnull(superevent_data[participant]):
+                    superevent_data[participant] = Placement(None, math.inf)
+                if pd.isnull(older_placement):
+                    continue
+                superevent_data[participant].four_year_points += int(coef * older_placement.superevent_points)
+
+            if all(
+                processed_count == LIMITS[superevent_type]
+                for superevent_type, processed_count in processed_superevents.items()
+            ):
+                break
+
+    for superevent in data:
+        superevent_placements = [plac for plac in data[superevent].values if not pd.isnull(plac)]
+        superevent_placements = sorted(superevent_placements, key=lambda plac: plac.get_four_year_rank_key)
+        for i, placement in enumerate(superevent_placements):
+            placement.four_year_rank = i + 1
+
+    return data
