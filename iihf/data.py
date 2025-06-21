@@ -43,13 +43,23 @@ def load_participants_sheet(sheet_data: pd.DataFrame) -> None:
 
 def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) -> EventsType:
     """Load event and its placements from sheet"""
-    year, event_type_key = tuple(sheet_name.split("_", maxsplit=1))
+    try:
+        year, event_type_key = tuple(sheet_name.split("_", maxsplit=1))
+        year_int = int(year)
+    except (ValueError, IndexError):
+        raise ValueError(f"invalid sheet name '{sheet_name}'. Expected format: 'YEAR_EVENTTYPE'")
+    
     event_type = EVENT_TYPE_MAPPING.get(event_type_key)
-    event = Event(int(year), event_type)
+    if event_type is None:
+        raise ValueError(f"unknown event type '{event_type_key}' in sheet '{sheet_name}'. "
+                        f"Known types: {list(EVENT_TYPE_MAPPING.keys())}")
+    event = Event(year_int, event_type)
 
     placement_dict = {}
     for _, row in sheet_data.iterrows():
         participant = Participant.get_participant(row["participant"])
+        if participant is None:
+            raise ValueError(f"participant '{row['participant']}' not found in {event}")
         if participant in placement_dict:
             raise ValueError(f"duplicate placement for {participant} in {event}")
         if not pd.isnull(participant.parent):
@@ -90,11 +100,13 @@ def process_events(events: EventsType) -> pd.DataFrame:
 
 def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
     """Fill points and rank for the ranking period"""
-    for superevent_idx, (superevent, superevent_data) in enumerate(list(data.items())):
+    data_items = list(data.items())
+    
+    for superevent_idx, (superevent, superevent_data) in enumerate(data_items):
         processed_superevents = {OlympicGames: 0, Championship: 0}
 
         for backward in range(min(superevent_idx + 1, 5)):
-            older_superevent, _older_superevent_data = list(list(data.items()))[superevent_idx - backward]
+            older_superevent, _older_superevent_data = data_items[superevent_idx - backward]
             if processed_superevents[type(older_superevent)] >= LIMITS[type(older_superevent)]:
                 continue
             if superevent.year - older_superevent.year > LIMIT_YEARS:
@@ -120,6 +132,7 @@ def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
         superevent_placements = [plac for plac in data[superevent].values if not pd.isnull(plac)]
         superevent_placements = sorted(superevent_placements, key=lambda plac: plac.get_four_year_rank_key)
         for i, placement in enumerate(superevent_placements):
-            placement.four_year_rank = i + 1
+            if placement.four_year_points:
+                placement.four_year_rank = i + 1
 
     return data
