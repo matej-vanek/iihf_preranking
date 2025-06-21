@@ -151,6 +151,9 @@ def process_placement_dicts(placement_dicts: list[dict[Participant, Placement]])
 
 def get_formula(max_rank: int) -> Callable[[int], int]:
     """Create a formula translating rank into points"""
+    if max_rank <= 0:
+        raise ValueError("max_rank must be positive")
+    
     point_breaks = [1, 2, 4, 8]
     points_list = []
 
@@ -161,7 +164,10 @@ def get_formula(max_rank: int) -> Callable[[int], int]:
         if i + 1 in point_breaks:
             points -= 20
 
-    def _rank_to_points(rank):
+    def _rank_to_points(rank: int) -> int:
+        if rank < 1 or rank > max_rank:
+            raise ValueError(f"rank {rank} is out of range [1, {max_rank}]")
+        
         return points_list[rank - 1]
 
     return _rank_to_points
