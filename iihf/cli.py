@@ -4,6 +4,19 @@ import argparse
 from pathlib import Path
 
 from iihf.data import load_data
+from iihf.objects import Participant
+
+
+def get_historical_team_name(participant, placement):
+    """Get the historically accurate team name for the given placement."""
+    # If there's an original participant code, use that for the name
+    if placement.original_participant_code:
+        original_participant = Participant.get_participant(placement.original_participant_code)
+        if original_participant:
+            return original_participant.name_en
+    
+    # Fall back to the current participant name
+    return participant.name_en
 
 
 def main():
@@ -62,7 +75,8 @@ def main():
         print("-" * 30)
         
         for participant, placement in rankings[:args.top]:
-            print(f"{placement.four_year_rank:4d} | {participant.name_en:15s} | {placement.four_year_points}")
+            team_name = get_historical_team_name(participant, placement)
+            print(f"{placement.four_year_rank:4d} | {team_name:15s} | {placement.four_year_points}")
     
     except Exception as e:
         print(f"Error: {e}")
