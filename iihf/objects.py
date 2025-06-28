@@ -66,9 +66,9 @@ class Participant:
 
 @dataclass
 class Placement:
-    """Placement of a participant within a (super)event"""
+    """Placement of a series participant within a (super)event, with reference to the event participant"""
 
-    original_participant_code: Optional[str]
+    event_participant_code: Optional[str]
     superevent_rank: int | float  # starting from 1
     superevent_points: int = 0
     four_year_rank: int | float = math.inf
