@@ -57,15 +57,16 @@ def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) ->
 
     placement_dict = {}
     for _, row in sheet_data.iterrows():
-        participant = Participant.get_participant(row["participant"])
-        if participant is None:
+        event_participant = Participant.get_participant(row["participant"])
+        if event_participant is None:
             raise ValueError(f"participant '{row['participant']}' not found in {event}")
-        if participant in placement_dict:
-            raise ValueError(f"duplicate placement for {participant} in {event}")
-        if not pd.isnull(participant.parent):
-            participant = Participant.get_participant(participant.parent)
-        placement_dict[participant] = Placement(
-            original_participant_code=row["participant"],
+        series_participant = event_participant
+        if not pd.isnull(series_participant.parent):
+            series_participant = Participant.get_participant(series_participant.parent)
+        if series_participant in placement_dict:
+            raise ValueError(f"duplicate placement for {series_participant} in {event}")
+        placement_dict[series_participant] = Placement(
+            event_participant_code=row["participant"],
             superevent_rank=row["rank"],
             superevent_points=row.get("points"),
         )

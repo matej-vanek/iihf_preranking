@@ -7,16 +7,16 @@ from iihf.data import load_data
 from iihf.objects import Participant
 
 
-def get_historical_team_name(participant, placement):
-    """Get the historically accurate team name for the given placement."""
-    # If there's an original participant code, use that for the name
-    if placement.original_participant_code:
-        original_participant = Participant.get_participant(placement.original_participant_code)
-        if original_participant:
-            return original_participant.name_en
+def get_historical_team_name(series_participant, placement):
+    """Get the historically accurate team name for the given placement, using event participant if available."""
+    # If there's an event participant code, use that for the name
+    if placement.event_participant_code:
+        event_participant = Participant.get_participant(placement.event_participant_code)
+        if event_participant:
+            return event_participant.name_en
     
-    # Fall back to the current participant name
-    return participant.name_en
+    # Fall back to the series participant name
+    return series_participant.name_en
 
 
 def main():
