@@ -24,11 +24,12 @@ class Participant:
 
     all_participants = {}
 
-    def __init__(self, code: str, name_en: str, name_cs: str, parent: Optional[str]):
+    def __init__(self, code: str, name_en: str, name_cs: str, parent: Optional[str], line_color: Optional[str]):
         self._code = code
         self._name_en = name_en
         self._name_cs = name_cs
         self._parent = parent
+        self._line_color = line_color
         Participant.all_participants[self._code] = self
 
     def __lt__(self, other):
@@ -58,6 +59,10 @@ class Participant:
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def line_color(self):
+        return self._line_color
 
     @classmethod
     def get_participant(cls, code: str) -> Optional["Participant"]:
