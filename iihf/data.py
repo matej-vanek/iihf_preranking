@@ -137,5 +137,3 @@ def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
                 placement.four_year_rank = i + 1
 
     return data
-
-print(load_data("iihf/data.ods"))
