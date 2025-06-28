@@ -38,7 +38,7 @@ def load_data(path: str) -> pd.DataFrame:
 def load_participants_sheet(sheet_data: pd.DataFrame) -> None:
     """Load participants from their sheet"""
     for _, row in sheet_data.iterrows():
-        Participant(row["code"], row["name_en"], row["name_cs"], row["parent"] or None)
+        Participant(row["code"], row["name_en"], row["name_cs"], row["parent"] or None, row["line_color"] or None)
 
 
 def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) -> EventsType:
@@ -137,3 +137,5 @@ def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
                 placement.four_year_rank = i + 1
 
     return data
+
+print(load_data("iihf/data.ods"))
