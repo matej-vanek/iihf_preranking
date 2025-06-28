@@ -19,6 +19,27 @@ def get_historical_team_name(series_participant, placement):
     return series_participant.name_en
 
 
+def display_ranking(superevent, year_data, top_count):
+    """Display ranking for a specific superevent."""
+    rankings = []
+    
+    for participant, placement in year_data.items():
+        if placement.four_year_rank != float('inf'):
+            rankings.append((participant, placement))
+    
+    # Sort by rank
+    rankings.sort(key=lambda x: x[1].four_year_rank)
+    
+    # Display ranking
+    print(f"\n{superevent.__class__.__name__} {superevent.year}")
+    print("Rank | Team | Points")
+    print("-" * 30)
+    
+    for participant, placement in rankings[:top_count]:
+        team_name = get_historical_team_name(participant, placement)
+        print(f"{placement.four_year_rank:4d} | {team_name:15s} | {placement.four_year_points}")
+
+
 def main():
     """Show IIHF rankings."""
     parser = argparse.ArgumentParser(description="Show IIHF rankings")
@@ -47,36 +68,25 @@ def main():
         # Load data
         data = load_data(str(args.data_file))
         
-        # Find the superevent for the year
-        superevent = None
+        # Find all superevents for the year
+        year_superevents = []
         for col in data.columns:
             if col.year == args.year:
-                superevent = col
-                break
+                year_superevents.append(col)
         
-        if superevent is None:
+        if not year_superevents:
             print(f"No ranking data available for year {args.year}")
             return
         
-        # Get ranking data
-        year_data = data[superevent]
-        rankings = []
+        # Sort superevents by their order_in_year (Olympic Games first, then Championship)
+        year_superevents.sort(key=lambda x: x.order_in_year)
         
-        for participant, placement in year_data.items():
-            if placement.four_year_rank != float('inf'):
-                rankings.append((participant, placement))
+        print(f"IIHF World Rankings {args.year}")
         
-        # Sort by rank
-        rankings.sort(key=lambda x: x[1].four_year_rank)
-        
-        # Display top teams
-        print(f"IIHF World Ranking {args.year}")
-        print("Rank | Team | Points")
-        print("-" * 30)
-        
-        for participant, placement in rankings[:args.top]:
-            team_name = get_historical_team_name(participant, placement)
-            print(f"{placement.four_year_rank:4d} | {team_name:15s} | {placement.four_year_points}")
+        # Display each superevent ranking
+        for superevent in year_superevents:
+            year_data = data[superevent]
+            display_ranking(superevent, year_data, args.top)
     
     except Exception as e:
         print(f"Error: {e}")
