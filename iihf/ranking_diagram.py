@@ -116,6 +116,25 @@ class RankingDiagramGenerator:
         
         return lighter_flag
     
+    def _should_use_lighter_colors(self, participant_name: str, superevent, placement, base_use_lighter: bool) -> bool:
+        """Determine if a flag should use lighter colors based on special bleaching rules"""
+        use_lighter_colors = base_use_lighter
+        
+        # Russia and Belarus in years 2022-2026
+        if participant_name in ['Russia', 'Belarus']:
+            if (isinstance(superevent, OlympicGames) and 2023 <= superevent.year <= 2026) or (isinstance(superevent, Championship) and 2022 <= superevent.year <= 2026):
+                use_lighter_colors = True
+        
+        # cancelled 2020 championships
+        if superevent.year == 2020:
+            use_lighter_colors = True
+        
+        # cancelled 2021 division championships
+        if superevent.year == 2021 and placement.superevent_rank >= 17:
+            use_lighter_colors = True
+        
+        return use_lighter_colors
+
     def generate_diagram(self, 
                         output_path: str = "iihf/Reconstructed IIHF ranking.png",
                         num_superevents: int = 20,
@@ -274,8 +293,15 @@ class RankingDiagramGenerator:
                     col1, x1, y1, rank1, year1 = line_points[i]
                     col2, x2, y2, rank2, year2 = line_points[i + 1]
                     
-                    # Only connect if the superevents are consecutive (no gaps) and 4 years or less apart
-                    if col2 - col1 == 1 and year2 - year1 <= 4:
+                    # Connect if the superevents are consecutive (no gaps)
+                    if col2 - col1 == 1:
+                        # Determine line style based on year gap
+                        year_gap = year2 - year1
+                        if year_gap <= 4:
+                            linestyle = 'solid'
+                        else:
+                            linestyle = 'dotted'
+                        
                         # Check if we should draw this line segment
                         should_draw = True
                         
@@ -321,7 +347,7 @@ class RankingDiagramGenerator:
                                         end_x = start_x + t * dx
                                         end_y = boundary_y
                             
-                            ax.plot([start_x, end_x], [start_y, end_y], color=line_color, linewidth=4, zorder=1)
+                            ax.plot([start_x, end_x], [start_y, end_y], color=line_color, linewidth=4, linestyle=linestyle, zorder=1)
     
     def _draw_flags(self, ax, superevents, top_participants, top_positions,
                    flag_width, flag_height, horizontal_spacing, vertical_spacing):
@@ -337,6 +363,23 @@ class RankingDiagramGenerator:
                 if pd.isna(placement) or placement.four_year_rank == float('inf') or placement.four_year_rank > top_positions:
                     continue
                 
+                # Check if this is a new participant (didn't have valid four-year ranking in previous superevent)
+                is_new_participant = False
+                if col_idx > 0:
+                    prev_superevent = superevents[col_idx - 1]
+                    prev_superevent_data = self.data[prev_superevent]
+                    if participant in prev_superevent_data:
+                        prev_placement = prev_superevent_data[participant]
+                        # Check if participant had no valid four-year ranking in previous superevent
+                        if pd.isna(prev_placement) or prev_placement.four_year_rank == float('inf') or prev_placement.four_year_rank > top_positions:
+                            is_new_participant = True
+                    else:
+                        # Participant wasn't in previous superevent at all
+                        is_new_participant = True
+                else:
+                    # First superevent in the diagram, so it's a new participant
+                    is_new_participant = True
+                
                 # Get event participant for flag selection
                 event_participant = None
                 if placement.event_participant_code:
@@ -347,11 +390,19 @@ class RankingDiagramGenerator:
                     if event_participant:
                         # Use event participant's flag
                         flag_path = self._get_flag_path(event_participant.name_en, superevent.year)
-                        use_lighter_colors = False
+                        base_use_lighter_colors = False
                     else:
                         # Use series participant's flag with lighter colors
                         flag_path = self._get_flag_path(participant.name_en, superevent.year)
-                        use_lighter_colors = True
+                        base_use_lighter_colors = True
+                    
+                    # Get participant name for bleaching rules
+                    participant_name = event_participant.name_en if event_participant else participant.name_en
+                    
+                    # Apply special bleaching rules
+                    use_lighter_colors = self._should_use_lighter_colors(
+                        participant_name, superevent, placement, base_use_lighter_colors
+                    )
                     
                     # Load and resize flag
                     flag_img = self._load_and_resize_flag(flag_path, flag_width, flag_height)
@@ -364,10 +415,23 @@ class RankingDiagramGenerator:
                     x = col_idx * (flag_width + horizontal_spacing)
                     y = (placement.four_year_rank - 1) * (flag_height + vertical_spacing)
                     
+                    # Determine border properties based on whether this is a new participant
+                    if is_new_participant:
+                        border_color = 'white'
+                        border_width = 8
+                    else:
+                        border_color = 'black'
+                        border_width = 1
+                    
                     # Create offset image
                     im = OffsetImage(flag_img, zoom=1.0)
-                    ab = AnnotationBbox(im, (x, y), frameon=True, 
-                                      bboxprops=dict(edgecolor='black', linewidth=1), pad=0)
+                    ab = AnnotationBbox(
+                        im,
+                        (x, y),
+                        frameon=True,
+                        bboxprops=dict(edgecolor=border_color, linewidth=border_width),
+                        pad=0
+                        )
                     ax.add_artist(ab)
                     
                 except Exception as e:
