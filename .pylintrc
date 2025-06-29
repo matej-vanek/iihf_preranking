@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+disable=too-many-locals,too-many-arguments,too-many-positional-arguments,too-many-nested-blocks,too-many-branches,line-too-long,too-many-instance-attributes
+
+[MASTER]
+init-hook='import sys; sys.path.append(".")'
