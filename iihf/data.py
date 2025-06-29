@@ -46,13 +46,15 @@ def load_event(events: EventsType, sheet_name: str, sheet_data: pd.DataFrame) ->
     try:
         year, event_type_key = tuple(sheet_name.split("_", maxsplit=1))
         year_int = int(year)
-    except (ValueError, IndexError):
-        raise ValueError(f"invalid sheet name '{sheet_name}'. Expected format: 'YEAR_EVENTTYPE'")
-    
+    except (ValueError, IndexError) as e:
+        raise ValueError(f"invalid sheet name '{sheet_name}'. Expected format: 'YEAR_EVENTTYPE'") from e
+
     event_type = EVENT_TYPE_MAPPING.get(event_type_key)
     if event_type is None:
-        raise ValueError(f"unknown event type '{event_type_key}' in sheet '{sheet_name}'. "
-                        f"Known types: {list(EVENT_TYPE_MAPPING.keys())}")
+        raise ValueError(
+            f"unknown event type '{event_type_key}' in sheet '{sheet_name}'. "
+            f"Known types: {list(EVENT_TYPE_MAPPING.keys())}"
+        )
     event = Event(year_int, event_type)
 
     placement_dict = {}
@@ -102,7 +104,7 @@ def process_events(events: EventsType) -> pd.DataFrame:
 def process_four_years(data: pd.DataFrame) -> pd.DataFrame:
     """Fill points and rank for the ranking period"""
     data_items = list(data.items())
-    
+
     for superevent_idx, (superevent, superevent_data) in enumerate(data_items):
         processed_superevents = {OlympicGames: 0, Championship: 0}
 

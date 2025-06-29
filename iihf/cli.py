@@ -14,7 +14,7 @@ def get_historical_team_name(series_participant, placement):
         event_participant = Participant.get_participant(placement.event_participant_code)
         if event_participant:
             return event_participant.name_en
-    
+
     # Fall back to the series participant name
     return series_participant.name_en
 
@@ -22,19 +22,19 @@ def get_historical_team_name(series_participant, placement):
 def display_ranking(superevent, year_data, top_count):
     """Display ranking for a specific superevent."""
     rankings = []
-    
+
     for participant, placement in year_data.items():
-        if placement.four_year_rank != float('inf'):
+        if placement.four_year_rank != float("inf"):
             rankings.append((participant, placement))
-    
+
     # Sort by rank
     rankings.sort(key=lambda x: x[1].four_year_rank)
-    
+
     # Display ranking
     print(f"\n{superevent.__class__.__name__} {superevent.year}")
     print("Rank | Team | Points")
     print("-" * 30)
-    
+
     for participant, placement in rankings[:top_count]:
         team_name = get_historical_team_name(participant, placement)
         print(f"{placement.four_year_rank:4d} | {team_name:15s} | {placement.four_year_points}")
@@ -44,53 +44,40 @@ def main():
     """Show IIHF rankings."""
     parser = argparse.ArgumentParser(description="Show IIHF rankings")
     parser.add_argument(
-        "--data-file", "-d",
-        type=Path,
-        default="iihf/data.ods",
-        help="Path to the data file (ODS format)"
+        "--data-file", "-d", type=Path, default="iihf/data.ods", help="Path to the data file (ODS format)"
     )
-    parser.add_argument(
-        "--year", "-y",
-        type=int,
-        required=True,
-        help="Specific year to show ranking for"
-    )
-    parser.add_argument(
-        "--top", "-t",
-        type=int,
-        default=20,
-        help="Number of top teams to display"
-    )
-    
+    parser.add_argument("--year", "-y", type=int, required=True, help="Specific year to show ranking for")
+    parser.add_argument("--top", "-t", type=int, default=20, help="Number of top teams to display")
+
     args = parser.parse_args()
-    
+
     try:
         # Load data
         data = load_data(str(args.data_file))
-        
+
         # Find all superevents for the year
         year_superevents = []
         for col in data.columns:
             if col.year == args.year:
                 year_superevents.append(col)
-        
+
         if not year_superevents:
             print(f"No ranking data available for year {args.year}")
             return
-        
+
         # Sort superevents by their order_in_year (Olympic Games first, then Championship)
         year_superevents.sort(key=lambda x: x.order_in_year)
-        
+
         print(f"IIHF World Rankings {args.year}")
-        
+
         # Display each superevent ranking
         for superevent in year_superevents:
             year_data = data[superevent]
             display_ranking(superevent, year_data, args.top)
-    
-    except Exception as e:
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error: {e}")
 
 
 if __name__ == "__main__":
-    main() 
+    main()
