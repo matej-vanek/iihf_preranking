@@ -1,6 +1,8 @@
 # README
 
-Data contain data of
+Visualized IIHF Ranking extrapolation to the origins of international ice hockey.
+
+Data consist of:
 - separately held European Championships  - 1910, 1911, 1913, 1914, 1921-1927, 1929, 1932
 - World Championships - 1930-2023 except olympic years (1932, 1936, 1948, 1952, 1956, 1960, 1964, 1968, 1980, 1984 and 1988)
 and war pause 1940-1946
@@ -25,3 +27,4 @@ Points assigned to each participant for a superevent prior to year 2000 are defi
 - last placed participant gets 20 points
 - each better placements gets 20 points more, except for 1st, 2nd, 4th and 8th placed participants, which get 40 points
 more than the previous participant
+
